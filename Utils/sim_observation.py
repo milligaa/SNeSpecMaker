@@ -40,7 +40,7 @@ def Comb_Maker(
 
     # defining parameters for use down the code
     G_mag = Gal_mag * u.ABmag
-    S_mag = (SNe_mag + 0.545) * u.ABmag
+    S_mag = SNe_mag * u.ABmag
     redshift = Redshift
 
     # importing the data to be used
@@ -67,7 +67,6 @@ def Comb_Maker(
     spec = Spectrum(wavelength_z, photon_flux)
     spec_mag = spec.get_mag(u.ABmag, "LSST_LSST.r")
 
-    # note the 0.545 mag factor added to Smag to account for fibre loss
     flux_ratio = 10 ** ((S_mag.value - spec_mag.value) / (-2.5))
 
     new_flux = photon_flux * flux_ratio
@@ -122,7 +121,6 @@ def Comb_Maker(
     new_spec = Spectrum(wavelength_z, contaminated_flux)
     new_spec.flux = new_spec.flux * u.erg / (u.cm**2 * u.s * u.angstrom)
     # divide by arcseconds squared for flat spatial distro
-    # already account for fibre size by adding 0.545 mag to SNe
     new_spec.flux = new_spec.flux / (1.665 * u.arcsec * u.arcsec)
 
     # set the new spectrum as the target for observation
