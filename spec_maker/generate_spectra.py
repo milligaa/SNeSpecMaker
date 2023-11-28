@@ -5,13 +5,22 @@ from SNeSpecMaker.Utils.seeing_effects import point_convolute, effective_fibre_m
 import argparse
 import yaml
 
-def template_flow(yaml_init_data):
+def template_flow(yaml_init_data: dict) -> None:
+    """
+    This functions combines those in the util folder to create
+    contaminated spectra and save the SNR data from them.
+
+    :param str yaml_init_data: dictionary of paths loaded from yaml file
+    """
 
     results_path = yaml_init_data["SNR_results_path"]
+    sim_data_location = yaml_init_data["sim_data_loc"]
+    spectrum_save_path = yaml_init_data["spectra_saving_path"]
+    save_tab_path = yaml_init_data["interim_product_path"]
 
     #extracts data from the selfie files and returns the table with everything I need
 
-    data_to_use = SELFIE_extractor()
+    data_to_use = SELFIE_extractor(sim_data_location, save_tab_path)
 
     #uses the SELFIE file to get parameters like redshift, magnitude and SNe type for use in template generation
     template_values = adj_setup(data_to_use)
@@ -23,8 +32,6 @@ def template_flow(yaml_init_data):
     supernovae = template_values[7]
     ddlr = template_values[8]
     snsep = template_values[9]
-    texp_obj = template_values[10]
-    texp_visit = template_values[11]
 
     #now must perform the correction for effective fibre mag
     seeing_val = 0.8
@@ -93,20 +100,20 @@ def template_flow(yaml_init_data):
             try:
                 print(dummy, 'of', len(supernovae))
                 result = Comb_Maker(supernovae[dummy], galaxies[dummy],
-                50, Smags[dummy], redshift[dummy], galaxies[dummy][72:74], SN_type_str[dummy], texp_obj[dummy], seeing_val,
-                '/Users/andrew/Desktop/Python_Stuff/Contaminated_Templates/S238missed_expobj_nohost/')
+                50, Smags[dummy], redshift[dummy], galaxies[dummy][72:74],
+                SN_type_str[dummy], 20, seeing_val, spectrum_save_path)
 
                 result2 = Comb_Maker(supernovae[dummy], galaxies[dummy],
-                Gmags[dummy], Smags[dummy], redshift[dummy], galaxies[dummy][72:74], SN_type_str[dummy], texp_obj[dummy], seeing_val,
-                '/Users/andrew/Desktop/Python_Stuff/Contaminated_Templates/S238missed_expobj_host/')
+                Gmags[dummy], Smags[dummy], redshift[dummy], galaxies[dummy][72:74],
+                SN_type_str[dummy], 40, seeing_val, spectrum_save_path)
 
                 result3 = Comb_Maker(supernovae[dummy], galaxies[dummy],
-                50, Smags[dummy], redshift[dummy], galaxies[dummy][72:74], SN_type_str[dummy], texp_visit[dummy], seeing_val,
-                '/Users/andrew/Desktop/Python_Stuff/Contaminated_Templates/S238missed_expvisit_nohost/')
+                50, Smags[dummy], redshift[dummy], galaxies[dummy][72:74],
+                SN_type_str[dummy], 60, seeing_val, spectrum_save_path)
 
                 result4 = Comb_Maker(supernovae[dummy], galaxies[dummy],
-                Gmags[dummy], Smags[dummy], redshift[dummy], galaxies[dummy][72:74], SN_type_str[dummy], texp_visit[dummy], seeing_val,
-                '/Users/andrew/Desktop/Python_Stuff/Contaminated_Templates/S238missed_expvisit_host/')
+                Gmags[dummy], Smags[dummy], redshift[dummy], galaxies[dummy][72:74],
+                SN_type_str[dummy], 120, seeing_val, spectrum_save_path)
         
                 L1_SNR_corr1.append(result[0])
                 Comb_mag_corr1.append(result[1].value)
@@ -139,8 +146,6 @@ def template_flow(yaml_init_data):
         del(Smags[bad_index[bad] - bad])
         del(Gmags[bad_index[bad] - bad])
         del(phase[bad_index[bad] - bad])
-        del(texp_obj[bad_index[bad] - bad])
-        del(texp_visit[bad_index[bad] - bad])
 
     SNR_table = Table()
     SNR_table['average_SNR'] = L1_SNR_corr1
@@ -149,7 +154,6 @@ def template_flow(yaml_init_data):
     SNR_table['Smags'] = Smags
     SNR_table['gmags'] = Gmags
     SNR_table['phase'] = phase
-    SNR_table['texp'] = texp_obj
 
     SNR_table2 = Table()
     SNR_table2['average_SNR'] = L1_SNR_corr2
@@ -158,7 +162,6 @@ def template_flow(yaml_init_data):
     SNR_table2['Smags'] = Smags
     SNR_table2['gmags'] = Gmags
     SNR_table2['phase'] = phase
-    SNR_table2['texp'] = texp_obj
 
     SNR_table3 = Table()
     SNR_table3['average_SNR'] = L1_SNR_corr3
@@ -167,7 +170,6 @@ def template_flow(yaml_init_data):
     SNR_table3['Smags'] = Smags
     SNR_table3['gmags'] = Gmags
     SNR_table3['phase'] = phase
-    SNR_table3['texp'] = texp_visit
 
     SNR_table4 = Table()
     SNR_table4['average_SNR'] = L1_SNR_corr4
@@ -176,7 +178,6 @@ def template_flow(yaml_init_data):
     SNR_table4['Smags'] = Smags
     SNR_table4['gmags'] = Gmags
     SNR_table4['phase'] = phase
-    SNR_table4['texp'] = texp_visit
 
     ascii.write(SNR_table, (results_path+'S238missed_wfd_texpobj_nohost.txt'), overwrite = True)
     ascii.write(SNR_table2, (results_path+'S238missed_wfd_texpobj_host.txt'), overwrite = True)
@@ -184,6 +185,13 @@ def template_flow(yaml_init_data):
     ascii.write(SNR_table4, (results_path+'S238missed_wfd_texpvis_host.txt'), overwrite = True)
 
 def parser():
+    """
+    Function that allows a filename to be passed from command line
+    into the template_flow function
+
+    :return: object containing arguments passed in the command line as strings
+    :rtype: argparse.ArgmumentParser class
+    """
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(

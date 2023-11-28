@@ -4,44 +4,40 @@ import glob
 from astropy.table import Table, join
 
 
-def SELFIE_extractor() -> Table:
+def SELFIE_extractor(sim_data_path, table_save_path) -> Table:
 
     """
     Extracts all relevant parameters from set of simulation results.
 
+    :param str sim_data_path: path to simulation data.
+    :param str table_save_path: save table of combined 
+        data from all sims.
     :return: Table of parameters.
-    :rtype: Table
+    :rtype: Table.
     """
 
     # import all of our tables
     print('loading gal_2pt0')
-    gal_2pt0 = Table.read("/Users/andrew/Desktop/Python_Stuff/SN_and_Galaxy/"
-                          "fits_storage_2/2pt0_wfd_galdat.csv",
+    gal_2pt0 = Table.read((sim_data_path+'2pt0_wfd_galdat.csv'),
                           format='csv', delimiter=',')
     print('gal_2pt0 loaded successfully')
     print(len(gal_2pt0))
     print('loading phase_data')
-    phase_data = Table.read("/Users/andrew/Desktop/Python_Stuff/SN_and_Galaxy/"
-                            "Fits_storage_2/SNe_phasedata1.csv",
+    phase_data = Table.read((sim_data_path+"SNe_phasedata1.csv"),
                             format='csv', delimiter=',')
     print('phase data loadded successfully')
     print('loading SELFIEsim_SNe')
-    SELFIE_SNe = Table.read("/Users/andrew/Desktop/Python_Stuff/SN_and_Galaxy/"
-                            "Fits_storage_2/SELFIE172_S1001.csv",
+    SELFIE_SNe = Table.read((sim_data_path+"SELFIE172_S1001.csv"),
                             format='csv', delimiter=',')
     print('SELFIEsim_SNe loaded successfully')
     print('loading cat_export_SNe')
-    cat_export_SNe = Table.read("/Users/andrew/Desktop/Python_Stuff/"
-                                "SN_and_Galaxy/Fits_storage_2/"
-                                "catex45_S1001.csv",
+    cat_export_SNe = Table.read((sim_data_path+"catex45_S1001.csv"),
                                 format='csv', delimiter=',')
     print('cat_export_SNe loaded successfully')
 
     print('loading texp data')
-    tiles = Table.read("/Users/andrew/Desktop/Python_Stuff/SN_and_Galaxy/"
-                       "fits_storage/SELFIE172_tiles.fits")
-    fibres = Table.read("/Users/andrew/Desktop/Python_Stuff/SN_and_Galaxy/"
-                        "fits_storage/SELFIE172_fibres.fits")
+    tiles = Table.read((sim_data_path+"SELFIE172_tiles.fits"))
+    fibres = Table.read((sim_data_path+"SELFIE172_fibres.fits"))
 
     extracted_date_info = join(fibres['targ_id', 'tile_id'],
                                tiles['tile_id', 'texp', 'jd_obs'],
@@ -125,8 +121,7 @@ def SELFIE_extractor() -> Table:
     print('first line of table being saved = ', to_save[0])
 
     ascii.write(to_save,
-                "/Users/andrew/Desktop/Python_Stuff/SN_and_Galaxy/Results/"
-                "text_dump_SNANAtemps/SELFIE172_SNANA_tests_WFD.txt",
+                (table_save_path+"SELFIE172_SNANA_tests_WFD.txt"),
                 format='csv', delimiter=',', overwrite=True)
 
     return to_save
@@ -151,8 +146,6 @@ def adj_setup(data: Table) -> list:
     phase = []
     ddlr = []
     snsep = []
-    texp_visit = []
-    texp_obj = []
 
     real_data = data
 
@@ -165,8 +158,6 @@ def adj_setup(data: Table) -> list:
         phase.append(-99)
         ddlr.append(real_data['hostgal_ddlr'][it])
         snsep.append(real_data['hostgal_snsep'][it])
-        texp_visit.append(38.712673)
-        texp_obj.append(26.323857223591407)
 
     gal_array = glob.glob(
         '/Users/Andrew/Desktop/Python_Stuff/SN_and_Galaxy/galaxy_templates/*'
@@ -188,4 +179,4 @@ def adj_setup(data: Table) -> list:
         supernovae.append(SNe_temp_array[SNe_temp_names.index(templates[ti])])
 
     return [redshift, Smags, Gmags, phase, templates, SNe_types, galaxies,
-            supernovae, ddlr, snsep, texp_obj, texp_visit]
+            supernovae, ddlr, snsep]

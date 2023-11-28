@@ -3,7 +3,17 @@ import scipy.ndimage
 import numpy as np
 
 
-def point_convolute(seeing, sne_mag):
+def point_convolute(seeing, sne_mag) -> float:
+    """
+    Calculates magnitude of a SNe down a 4MOST fibre by accounting for
+    seeing effects.
+
+    :param float seeing: the atmospheric seeing FWHM in arcseconds.
+    :param float sne_mag: magnitude of SNe in AB-mag in LSST r-band.
+    :return: effective mag of SNe down a 4MOST fibre.
+    :rtype: float.
+    """
+
     # first turn the seeing value into a sigma for the gaussian
     FWHM = seeing
     sigma = FWHM / (2 * np.sqrt(2 * np.log(2)))
@@ -32,6 +42,22 @@ def point_convolute(seeing, sne_mag):
 
 def effective_fibre_mag(sep, gal_ddlr, sersic_index,
                         galmag, pix_size_arcsec, seeing):
+
+    """
+    Calculates the effective magnitude of an extended host galaxy
+    object seen by a 4MOST fibre placed directly on the transient
+    it hosts.
+
+    :param float sep: seperation between host and transient in arcseconds.
+    :param float ddlr: directional light radius normalised by sep.
+    :param float sersic_index: sersic index to be assumed for host.
+    :param float galmag: AB magnitude of host in LSST r-band filter.
+    :param float pix_size_arcsec: projected pixel size in arcseconds.
+    :param float seeing: atmospheric seeing FWHM in arcseconds.
+    :return: effective host magnitude down 4MOST fibre
+    rtype: float
+    """    
+
     dlr = gal_ddlr * sep
     gmag = galmag
     seperation = sep
