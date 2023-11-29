@@ -188,6 +188,7 @@ def adj_setup(data: Table) -> list:
 
 def assign_sim_files(sim_data_path):
     all_data_files = glob.glob((sim_data_path+'*'))
+    print(all_data_files)
 
     selfie_file = ''
     catex_file = ''
@@ -208,6 +209,7 @@ def assign_sim_files(sim_data_path):
     warnings.simplefilter("ignore")
 
     for file in all_data_files:
+        print(file)
         try:
             hdul = fits.open(file, ignore_missing_simple=True)
             data_cols = list(hdul[1].data.columns)
@@ -259,3 +261,8 @@ def assign_sim_files(sim_data_path):
         }
 
     return file_dict
+
+
+good_data_path = '/Users/andrew/Desktop/Python_Stuff/my_spectrum_maker/SNeSpecMaker/tests/good_test_data/'
+output = assign_sim_files(good_data_path)
+print(output)
