@@ -231,6 +231,7 @@ def assign_sim_files(sim_data_path):
             try:
                 data_cols = pd.read_csv(file, index_col=None,
                                         nrows=0).columns.to_list()
+                print(data_cols, '------------------------------------')
 
                 if all(x in data_cols for x in selfie_cols) is True:
                     selfie_file = file
@@ -248,7 +249,7 @@ def assign_sim_files(sim_data_path):
                     raise IndexError((
                         'csv sim file columns not recognised for '+file))
 
-            except UnicodeDecodeError:
+            except UnicodeDecodeError or IndexError:
                 raise TypeError((file+' is not a valid simulation file'))
 
     file_dict = {
@@ -260,9 +261,9 @@ def assign_sim_files(sim_data_path):
         "fibres": fibres_file
         }
 
+    for _, items in file_dict.items():
+        if items == '':
+            raise ValueError('at least one sim file is missing')
+        else: continue
+
     return file_dict
-
-
-good_data_path = '/Users/andrew/Desktop/Python_Stuff/my_spectrum_maker/SNeSpecMaker/tests/good_test_data/'
-output = assign_sim_files(good_data_path)
-print(output)

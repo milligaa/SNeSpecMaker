@@ -4,10 +4,10 @@
 SNR_results_path: /Users/andrew/Desktop/Python_Stuff/my_spectrum_maker/test_folder/SNR_res/
 
 #path for saving the contaminated spectra produced by comb_maker()
-spectra_save_path: /Users/andrew/Desktop/Python_Stuff/my_spectrum_maker/test_folder/contamined_spectra
+spectra_save_path: /Users/andrew/Desktop/Python_Stuff/my_spectrum_maker/test_folder/contamined_spectra/
 
 #path for saving interim combined simulation tables
-interim_product_path: /Users/andrew/Desktop/Python_Stuff/my_spectrum_maker/test_folder/combined_tables
+interim_product_path: /Users/andrew/Desktop/Python_Stuff/my_spectrum_maker/test_folder/combined_tables/
 
 #location of simulation data
-sim_data_loc: /Users/andrew/Desktop/Python_Stuff/my_spectrum_maker/test_folder/sim_data
+sim_data_loc: /Users/andrew/Desktop/Python_Stuff/my_spectrum_maker/test_folder/sim_data/
