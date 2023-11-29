@@ -2,14 +2,18 @@ from astropy.io import ascii
 import random
 import glob
 from astropy.table import Table, join
+import glob
+import pandas as pd
+from astropy.io import fits
+import warnings
 
-
-def SELFIE_extractor(sim_data_path, table_save_path) -> Table:
+def SELFIE_extractor(sim_file_dict, table_save_path) -> Table:
 
     """
     Extracts all relevant parameters from set of simulation results.
 
-    :param str sim_data_path: path to simulation data.
+    :param str sim_file_dict: dictionary containing paths to all sim
+        files which can be produced by the assign_sim_files function.
     :param str table_save_path: save table of combined 
         data from all sims.
     :return: Table of parameters.
@@ -18,26 +22,26 @@ def SELFIE_extractor(sim_data_path, table_save_path) -> Table:
 
     # import all of our tables
     print('loading gal_2pt0')
-    gal_2pt0 = Table.read((sim_data_path+'2pt0_wfd_galdat.csv'),
+    gal_2pt0 = Table.read(sim_file_dict["galpop"],
                           format='csv', delimiter=',')
     print('gal_2pt0 loaded successfully')
     print(len(gal_2pt0))
     print('loading phase_data')
-    phase_data = Table.read((sim_data_path+"SNe_phasedata1.csv"),
+    phase_data = Table.read(sim_file_dict["phase"],
                             format='csv', delimiter=',')
     print('phase data loadded successfully')
     print('loading SELFIEsim_SNe')
-    SELFIE_SNe = Table.read((sim_data_path+"SELFIE172_S1001.csv"),
+    SELFIE_SNe = Table.read(sim_file_dict["selfie"],
                             format='csv', delimiter=',')
     print('SELFIEsim_SNe loaded successfully')
     print('loading cat_export_SNe')
-    cat_export_SNe = Table.read((sim_data_path+"catex45_S1001.csv"),
+    cat_export_SNe = Table.read(sim_file_dict["catex"],
                                 format='csv', delimiter=',')
     print('cat_export_SNe loaded successfully')
 
     print('loading texp data')
-    tiles = Table.read((sim_data_path+"SELFIE172_tiles.fits"))
-    fibres = Table.read((sim_data_path+"SELFIE172_fibres.fits"))
+    tiles = Table.read(sim_file_dict["tiles"])
+    fibres = Table.read(sim_file_dict["fibres"])
 
     extracted_date_info = join(fibres['targ_id', 'tile_id'],
                                tiles['tile_id', 'texp', 'jd_obs'],
@@ -180,3 +184,76 @@ def adj_setup(data: Table) -> list:
 
     return [redshift, Smags, Gmags, phase, templates, SNe_types, galaxies,
             supernovae, ddlr, snsep]
+
+
+def assign_sim_files(sim_data_path):
+    all_data_files = glob.glob((sim_data_path+'*'))
+
+    selfie_file = ''
+    catex_file = ''
+    galpop_file = ''
+    phasedata_file = ''
+    fibres_file = ''
+    tiles_file = ''
+
+    selfie_cols = ['fobs', 'jd_obs_first', 'jd_obs_last',
+                   'jd_last_observed', 'texp_d', 'texp_g']
+    catex_cols = ['mag', 'targ_id', 'name']
+    galpop_cols = ['sim_model_name', 'sim_type_name',
+                   'hostgal_snsep', 'hostgal_ddlr']
+    phase_cols = ['RA', 'DEC', 'TEMPLATE']
+    tile_cols = ['texp', 'tile_id', 'jd_obs']
+    fibre_cols = ['tile_id', 'targ_id']
+
+    warnings.simplefilter("ignore")
+
+    for file in all_data_files:
+        try:
+            hdul = fits.open(file, ignore_missing_simple=True)
+            data_cols = list(hdul[1].data.columns)
+            col_names = [col.name for col in data_cols]
+
+            if all(x in col_names for x in tile_cols) == True:
+                tiles_file = file
+            
+            elif all(x in col_names for x in fibre_cols) == True:
+                fibres_file = file
+
+            else:
+                raise IndexError(("Correct fits columns not found "
+                                    "check condition of "+file))
+
+        except OSError:
+            print(file, ' is not a fits file, retrying for csv')
+
+            try:
+                data_cols = pd.read_csv(file, index_col=None, nrows=0).columns.to_list()
+
+                if all(x in data_cols for x in selfie_cols) == True:
+                    selfie_file = file
+
+                elif all(x in data_cols for x in catex_cols) == True:
+                    catex_file = file
+
+                elif all(x in data_cols for x in galpop_cols) == True:
+                    galpop_file = file
+
+                elif all(x in data_cols for x in phase_cols) == True:
+                    phasedata_file = file
+
+                else:
+                    raise IndexError(('csv sim file columns not recognised for '+file))
+                
+            except:
+                raise TypeError((file+' is not a valid simulation file'))
+
+    file_dict = {
+        "galpop": galpop_file,
+        "selfie": selfie_file,
+        "catex": catex_file,
+        "phase": phasedata_file,
+        "tiles": tiles_file,
+        "fibres": fibres_file
+        }
+
+    return file_dict
