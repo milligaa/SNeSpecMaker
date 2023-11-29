@@ -2,10 +2,10 @@ from astropy.io import ascii
 import random
 import glob
 from astropy.table import Table, join
-import glob
 import pandas as pd
 from astropy.io import fits
 import warnings
+
 
 def SELFIE_extractor(sim_file_dict, table_save_path) -> Table:
 
@@ -14,7 +14,7 @@ def SELFIE_extractor(sim_file_dict, table_save_path) -> Table:
 
     :param str sim_file_dict: dictionary containing paths to all sim
         files which can be produced by the assign_sim_files function.
-    :param str table_save_path: save table of combined 
+    :param str table_save_path: save table of combined
         data from all sims.
     :return: Table of parameters.
     :rtype: Table.
@@ -213,38 +213,40 @@ def assign_sim_files(sim_data_path):
             data_cols = list(hdul[1].data.columns)
             col_names = [col.name for col in data_cols]
 
-            if all(x in col_names for x in tile_cols) == True:
+            if all(x in col_names for x in tile_cols) is True:
                 tiles_file = file
-            
-            elif all(x in col_names for x in fibre_cols) == True:
+
+            elif all(x in col_names for x in fibre_cols) is True:
                 fibres_file = file
 
             else:
                 raise IndexError(("Correct fits columns not found "
-                                    "check condition of "+file))
+                                  "check condition of "+file))
 
         except OSError:
             print(file, ' is not a fits file, retrying for csv')
 
             try:
-                data_cols = pd.read_csv(file, index_col=None, nrows=0).columns.to_list()
+                data_cols = pd.read_csv(file, index_col=None,
+                                        nrows=0).columns.to_list()
 
-                if all(x in data_cols for x in selfie_cols) == True:
+                if all(x in data_cols for x in selfie_cols) is True:
                     selfie_file = file
 
-                elif all(x in data_cols for x in catex_cols) == True:
+                elif all(x in data_cols for x in catex_cols) is True:
                     catex_file = file
 
-                elif all(x in data_cols for x in galpop_cols) == True:
+                elif all(x in data_cols for x in galpop_cols) is True:
                     galpop_file = file
 
-                elif all(x in data_cols for x in phase_cols) == True:
+                elif all(x in data_cols for x in phase_cols) is True:
                     phasedata_file = file
 
                 else:
-                    raise IndexError(('csv sim file columns not recognised for '+file))
-                
-            except:
+                    raise IndexError((
+                        'csv sim file columns not recognised for '+file))
+
+            except UnicodeDecodeError:
                 raise TypeError((file+' is not a valid simulation file'))
 
     file_dict = {

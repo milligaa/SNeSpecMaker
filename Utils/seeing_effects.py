@@ -56,7 +56,7 @@ def effective_fibre_mag(sep, gal_ddlr, sersic_index,
     :param float seeing: atmospheric seeing FWHM in arcseconds.
     :return: effective host magnitude down 4MOST fibre
     rtype: float
-    """    
+    """
 
     dlr = gal_ddlr * sep
     gmag = galmag
