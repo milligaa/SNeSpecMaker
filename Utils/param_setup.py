@@ -7,7 +7,8 @@ from astropy.io import fits
 import warnings
 
 
-def SELFIE_extractor(sim_file_dict, table_save_path) -> Table:
+def SELFIE_extractor(sim_file_dict: dict,
+                     table_save_path: str) -> Table:
 
     """
     Extracts all relevant parameters from set of simulation results.
@@ -124,9 +125,9 @@ def SELFIE_extractor(sim_file_dict, table_save_path) -> Table:
 
     print('first line of table being saved = ', to_save[0])
 
-    ascii.write(to_save,
-                (table_save_path+"SELFIE172_SNANA_tests_WFD.txt"),
-                format='csv', delimiter=',', overwrite=True)
+    # ascii.write(to_save,
+    #             (table_save_path+"SELFIE172_SNANA_tests_WFD.txt"),
+    #             format='csv', delimiter=',', overwrite=True)
 
     return to_save
 
@@ -187,6 +188,11 @@ def adj_setup(data: Table) -> list:
 
 
 def assign_sim_files(sim_data_path):
+    """
+    Finds all simulation data files and determines which is which.
+
+    :param str sim_data_path: location of all sim files.
+    """
     all_data_files = glob.glob((sim_data_path+'*'))
     print(all_data_files)
 
