@@ -1,3 +1,6 @@
+"""This module contains all of the utility functions that are
+called when running the spec_maker module."""
+
 from astropy.io import ascii
 import random
 import glob
@@ -6,6 +9,7 @@ import pandas as pd
 from astropy.io import fits
 import warnings
 
+__docformat__ = 'reStructuredText'
 
 def SELFIE_extractor(sim_file_dict: dict,
                      table_save_path: str) -> Table:
@@ -13,10 +17,12 @@ def SELFIE_extractor(sim_file_dict: dict,
     """
     Extracts all relevant parameters from set of simulation results.
 
-    :param str sim_file_dict: dictionary containing paths to all sim
+    :param sim_file_dict: dictionary containing paths to all sim
         files which can be produced by the assign_sim_files function.
-    :param str table_save_path: save table of combined
+    :param table_save_path: save table of combined
         data from all sims.
+    :type sim_file_dict: dict
+    :type table_save_path: str
     :return: Table of parameters.
     :rtype: Table.
     """
@@ -125,9 +131,9 @@ def SELFIE_extractor(sim_file_dict: dict,
 
     print('first line of table being saved = ', to_save[0])
 
-    # ascii.write(to_save,
-    #             (table_save_path+"SELFIE172_SNANA_tests_WFD.txt"),
-    #             format='csv', delimiter=',', overwrite=True)
+    ascii.write(to_save,
+                (table_save_path+"SELFIE172_SNANA_tests_WFD.txt"),
+                format='csv', delimiter=',', overwrite=True)
 
     return to_save
 
@@ -138,7 +144,8 @@ def adj_setup(data: Table) -> list:
     Takes table of parameters extracted from simulations and
     adds then to lists for use in generating spectra.
 
-    :param table data: Table of parameters.
+    :param data: Table of parameters.
+    :type data: Table
     :return: list of values to loop into comb_maker().
     :rtype: list
     """
@@ -191,7 +198,8 @@ def assign_sim_files(sim_data_path):
     """
     Finds all simulation data files and determines which is which.
 
-    :param str sim_data_path: location of all sim files.
+    :param sim_data_path: location of all sim files.
+    :type sim_data_path: str
     """
     all_data_files = glob.glob((sim_data_path+'*'))
     print(all_data_files)
@@ -273,3 +281,7 @@ def assign_sim_files(sim_data_path):
         else: continue
 
     return file_dict
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()
