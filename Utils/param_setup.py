@@ -616,6 +616,55 @@ def assign_host(trans_species, template_path):
 
     return host
 
+def get_SN_and_host_type(gal_mags, SN, model_name, host_location):
+
+    SN_type_str = []
+    SN_phase = []
+    galaxies = []
+
+    for j in range(len(gal_mags)):
+        SN_ID_str_begin = SN[j].find('snt') + 3
+        SN_ID_str_end = SN[j].find('_phase')
+        SN_phase_end = SN[j].find('_redshift')
+        snt_ID = int(SN[j][SN_ID_str_begin:SN_ID_str_end])
+        SN_phase.append(int(SN[j][SN_ID_str_end+6:SN_phase_end]))
+
+        if snt_ID == 1:
+        #for some reason at least one IIb has a spec with SNT==1 -> Ia???? breaks SALT2 generation
+            if model_name[j] == 'SALT2.WF':
+                SN_type_str.append('Ia_')
+                SN[j] = 'SALT2'
+            else:
+                SN_type_str.append('IIb')
+        elif snt_ID in [11, 12]:
+            SN_type_str.append('Iap')
+        elif snt_ID == 60:
+            SN_type_str.append('KN_')
+        elif snt_ID == 70:
+            SN_type_str.append('SL_')
+        elif snt_ID == 50:
+            SN_type_str.append('CRT')
+        elif snt_ID == 80:
+            SN_type_str.append('TDE')
+        elif snt_ID == 21:
+            SN_type_str.append('IIn')
+        elif snt_ID == 23:
+            SN_type_str.append('IIb')
+        elif snt_ID == 25:
+            SN_type_str.append('II_')
+        elif snt_ID == 32:
+            SN_type_str.append('Ib_')
+        elif snt_ID in [33, 35]:
+            SN_type_str.append('Ic_')
+        elif snt_ID == 20:
+            SN_type_str.append('CC_')
+        else:
+            print(f'Unknown snt ID string: {snt_ID}, I would look into this')
+
+        galaxies.append(assign_host(SN_type_str[-1], host_location)[0])
+
+        return galaxies, SN_type_str, SN_phase
+
 if __name__ == "__main__":
     import doctest
     doctest.testmod()

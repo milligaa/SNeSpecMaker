@@ -20,8 +20,7 @@ def Comb_Maker(
     name: str,
     seeing: float,
     spec_save_path: str,
-    SALT2_params: dict,
-    model_dir: str
+    SALT2_params: dict
 ) -> float:
     """
     This code takes all of the parameters from the Selfie and population
