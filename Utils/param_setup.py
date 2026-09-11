@@ -138,14 +138,16 @@ def SELFIE_extractor(sim_file_dict: dict,
     return to_save
 
 
-def adj_setup(data: Table) -> list:
+def adj_setup(data: Table, SNANA_temps:str) -> list:
 
     """
     Takes table of parameters extracted from simulations and
     adds then to lists for use in generating spectra.
 
     :param data: Table of parameters.
+    :param SNANA_temps: path to SNANA SN SEDs
     :type data: Table
+    :type SNANA_temps: str
     :return: list of values to loop into comb_maker().
     :rtype: list
     """
@@ -158,6 +160,15 @@ def adj_setup(data: Table) -> list:
     phase = []
     ddlr = []
     snsep = []
+    texp_visit = []
+    isky = []
+    name = []
+    ra = []
+    dec = []
+    x0s = []
+    x1s = []
+    cs = []
+    model = []
 
     real_data = data
 
@@ -165,33 +176,39 @@ def adj_setup(data: Table) -> list:
         Smags.append(real_data['mag'][it])
         Gmags.append(real_data['hostgal_mag_r'][it])
         redshift.append(real_data['redshift_estimate'][it])
-        templates.append(real_data['TEMPLATE'][it])
+        templates.append(real_data['template'][it])
         SNe_types.append(real_data['sim_type_name'][it])
         phase.append(-99)
         ddlr.append(real_data['hostgal_ddlr'][it])
         snsep.append(real_data['hostgal_snsep'][it])
+        texp_visit.append(real_data['visit_texp'][it])
+        isky.append(real_data['isky'][it])
+        name.append(real_data['name'][it])
+        ra.append(real_data['ra_y'][it])
+        dec.append(real_data['dec_y'][it])
+        x0s.append(real_data['sim_SALT2x0'][it])
+        x1s.append(real_data['sim_SALT2x1'][it])
+        cs.append(real_data['sim_SALT2c'][it])
+        model.append(real_data['sim_type_name'][it])
 
-    gal_array = glob.glob(
-        '/Users/Andrew/Desktop/Python_Stuff/SN_and_Galaxy/galaxy_templates/*'
-        )
-    SNe_temp_array = glob.glob(
-        '/Users/andrew/Desktop/Python_Stuff/SN_and_Galaxy/SNANA_temps/*'
-        )
+    SNe_temp_array = glob.glob(SNANA_temps+'*')
+    print(SNe_temp_array)
 
     SNe_temp_names = []
     for t in range(len(SNe_temp_array)):
         SNe_name_begins = SNe_temp_array[t].find('SNANA_temps/') + 12
         SNe_temp_names.append(SNe_temp_array[t][SNe_name_begins:])
 
-    galaxies = []
     supernovae = []
     for ti in range(len(Smags)):
 
-        galaxies.append(random.choice(gal_array))
         supernovae.append(SNe_temp_array[SNe_temp_names.index(templates[ti])])
 
-    return [redshift, Smags, Gmags, phase, templates, SNe_types, galaxies,
-            supernovae, ddlr, snsep]
+
+
+    print(len(Smags), len(Gmags), len(redshift), len(supernovae))
+
+    return redshift, Smags, Gmags, phase, templates, SNe_types, supernovae, ddlr, snsep, texp_visit, isky, name, ra, dec, x0s, x1s, cs, model
 
 
 def assign_sim_files(sim_data_path):
@@ -281,6 +298,323 @@ def assign_sim_files(sim_data_path):
         else: continue
 
     return file_dict
+
+def assign_host(trans_species, template_path):
+    '''
+    Assigns host galaxies to transients probabilistically based on the 
+    probabilities within Hakobyan+2012. TDEs and CaRTs assigned random hosts
+    and SLSNe always assigned Sc.
+
+    :param trans_species: the subclass of the transient being operated on.
+    :param template_path: path to the host template files.
+    :type trans_species: str
+    :type template_path: str
+    :returns host: the path the host assigned for the input transient.
+    "rtype: str
+    '''
+
+    host = 0
+
+    # arrays here are the probability bins for a random seed to be a:
+    # E, E/S0, S0, S0/a, Sa, Sab, Sb, Sbc, Sc, Scd, Sd+
+    Ia = [0.08356164383561644, 0.1315068493150685, 0.20136986301369864, 0.3013698630136986, 0.34383561643835614, 0.41232876712328764, 0.5794520547945206, 0.7506849315068493, 0.9068493150684932, 0.9452054794520548, 1.0]
+    Ib = [0.02040816326530612, 0.02040816326530612, 0.04081632653061224, 0.04081632653061224, 0.061224489795918366, 0.10204081632653061, 0.22448979591836735, 0.40816326530612246, 0.6938775510204082, 0.7959183673469388, 1.0]
+    Ic = [0.0, 0.0, 0.0, 0.0, 0.011235955056179775, 0.056179775280898875, 0.2247191011235955, 0.5617977528089888, 0.7640449438202248, 0.8651685393258428, 1.0]
+    II = [0.0, 0.0, 0.0037105751391465678, 0.011131725417439703, 0.027829313543599257, 0.04452690166975881, 0.22634508348794063, 0.45083487940630795, 0.7884972170686456, 0.8608534322820037, 1.0]
+    IIn = [0.0, 0.0, 0.0, 0.013513513513513514, 0.04054054054054054, 0.04054054054054054, 0.1891891891891892, 0.3513513513513514, 0.7297297297297298, 0.8513513513513514, 1.0]
+    IIb = [0.0, 0.0, 0.0, 0.0, 0.04878048780487805, 0.04878048780487805, 0.14634146341463417, 0.36585365853658536, 0.6097560975609756, 0.7317073170731707, 1.0]
+
+    seed = random.random()
+
+    if trans_species in ['Ia_', 'Iap']:
+        #uses Ia probability distribution
+        if seed < Ia[0]:
+            # it's an ellipical
+            host = glob.glob(str(template_path+'*el*'))
+        elif Ia[0] <= seed < Ia[1]:
+            #its either elliptical or S0
+            host = random.choice([glob.glob(str(template_path+'*el*')),
+                                  glob.glob(str(template_path+'*s0*'))])
+        elif Ia[1] <= seed < Ia[2]:
+            #its S0
+            host = glob.glob(str(template_path+'*s0*'))
+        elif Ia[2] <= seed < Ia[3]:
+            #its either S0 or Sa
+            host = random.choice([glob.glob(str(template_path+'*s0*')),
+                                  glob.glob(str(template_path+'*sa*'))])    
+        elif Ia[3] <= seed < Ia[4]:
+            #its Sa
+            host = glob.glob(str(template_path+'*sa*'))
+        elif Ia[4] <= seed < Ia[5]:
+            #its either Sa or Sb
+            host = random.choice([glob.glob(str(template_path+'*sa*')),
+                                  glob.glob(str(template_path+'*sb*'))])
+        elif Ia[5] <= seed < Ia[6]:
+            #its Sb
+            host = glob.glob(str(template_path+'*sb*'))
+        elif Ia[6] <= seed < Ia[7]:
+            #its either Sb or Sc
+            host = random.choice([glob.glob(str(template_path+'*sb*')),
+                                  glob.glob(str(template_path+'*sc*'))])
+            
+        elif Ia[7] <= seed < Ia[8]:
+            #its Sc
+            host = glob.glob(str(template_path+'*sc*'))
+        elif Ia[8] <= seed < Ia[9]:
+            #its either Sc or Sd (we'll call this Sc)
+            host = glob.glob(str(template_path+'*sc*'))
+
+        elif seed > Ia[9]:
+            #its Sd+ (so either Sc or Sb (the most common hosts))
+            host = random.choice([glob.glob(str(template_path+'*sb*')),
+                                  glob.glob(str(template_path+'*sc*'))])
+        
+        else:
+            print(seed , ' is not recognised for some reason')
+
+    elif trans_species == 'Ib_':
+        #uses Ib probability distribution
+        if seed < Ib[0]:
+            # it's an ellipical
+            host = glob.glob(str(template_path+'*el*'))
+        elif Ib[0] <= seed < Ib[1]:
+            #its either elliptical or S0
+            host = random.choice([glob.glob(str(template_path+'*el*')),
+                                  glob.glob(str(template_path+'*s0*'))])
+        elif Ib[1] <= seed < Ib[2]:
+            #its S0
+            host = glob.glob(str(template_path+'*s0*'))
+        elif Ib[2] <= seed < Ib[3]:
+            #its either S0 or Sa
+            host = random.choice([glob.glob(str(template_path+'*s0*')),
+                                  glob.glob(str(template_path+'*sa*'))])    
+        elif Ib[3] <= seed < Ib[4]:
+            #its Sa
+            host = glob.glob(str(template_path+'*sa*'))
+        elif Ib[4] <= seed < Ib[5]:
+            #its either Sa or Sb
+            host = random.choice([glob.glob(str(template_path+'*sa*')),
+                                  glob.glob(str(template_path+'*sb*'))])
+        elif Ib[5] <= seed < Ib[6]:
+            #its Sb
+            host = glob.glob(str(template_path+'*sb*'))
+        elif Ib[6] <= seed < Ib[7]:
+            #its either Sb or Sc
+            host = random.choice([glob.glob(str(template_path+'*sb*')),
+                                  glob.glob(str(template_path+'*sc*'))])
+            
+        elif Ib[7] <= seed < Ib[8]:
+            #its Sc
+            host = glob.glob(str(template_path+'*sc*'))
+        elif Ib[8] <= seed < Ib[9]:
+            #its either Sc or Sd (we'll call this Sc)
+            host = glob.glob(str(template_path+'*sc*'))
+
+        elif seed > Ib[9]:
+            #its Sd+ (so either Sc or Sb (the most common hosts))
+            host = random.choice([glob.glob(str(template_path+'*sb*')),
+                                  glob.glob(str(template_path+'*sc*'))])
+        
+        else:
+            print(seed , ' is not recognised for some reason')
+
+    elif trans_species == 'Ic_':
+        #uses Ic probability distribution
+        if seed < Ic[0]:
+            # it's an ellipical
+            host = glob.glob(str(template_path+'*el*'))
+        elif Ic[0] <= seed < Ic[1]:
+            #its either elliptical or S0
+            host = random.choice([glob.glob(str(template_path+'*el*')),
+                                  glob.glob(str(template_path+'*s0*'))])
+        elif Ic[1] <= seed < Ic[2]:
+            #its S0
+            host = glob.glob(str(template_path+'*s0*'))
+        elif Ic[2] <= seed < Ic[3]:
+            #its either S0 or Sa
+            host = random.choice([glob.glob(str(template_path+'*s0*')),
+                                  glob.glob(str(template_path+'*sa*'))])    
+        elif Ic[3] <= seed < Ic[4]:
+            #its Sa
+            host = glob.glob(str(template_path+'*sa*'))
+        elif Ic[4] <= seed < Ic[5]:
+            #its either Sa or Sb
+            host = random.choice([glob.glob(str(template_path+'*sa*')),
+                                  glob.glob(str(template_path+'*sb*'))])
+        elif Ic[5] <= seed < Ic[6]:
+            #its Sb
+            host = glob.glob(str(template_path+'*sb*'))
+        elif Ic[6] <= seed < Ic[7]:
+            #its either Sb or Sc
+            host = random.choice([glob.glob(str(template_path+'*sb*')),
+                                  glob.glob(str(template_path+'*sc*'))])
+            
+        elif Ic[7] <= seed < Ic[8]:
+            #its Sc
+            host = glob.glob(str(template_path+'*sc*'))
+        elif Ic[8] <= seed < Ic[9]:
+            #its either Sc or Sd (we'll call this Sc)
+            host = glob.glob(str(template_path+'*sc*'))
+
+        elif seed > Ic[9]:
+            #its Sd+ (so either Sc or Sb (the most common hosts))
+            host = random.choice([glob.glob(str(template_path+'*sc*')),
+                                  glob.glob(str(template_path+'*sb*'))])
+        
+        else:
+            print(seed , ' is not recognised for some reason')
+
+    elif trans_species == 'II_':
+        print(II[2], II[3])
+        #uses II probability distribution
+        if seed < II[0]:
+            # it's an ellipical
+            host = glob.glob(str(template_path+'*el*'))
+        elif II[0] <= seed < II[1]:
+            #its either elliptical or S0
+            host = random.choice([glob.glob(str(template_path+'*el*')),
+                                  glob.glob(str(template_path+'*s0*'))])
+        elif II[1] <= seed < II[2]:
+            #its S0
+            host = glob.glob(str(template_path+'*s0*'))
+        elif II[2] <= seed < II[3]:
+            #its either S0 or Sa
+            host = random.choice([glob.glob(str(template_path+'*s0*')),
+                                  glob.glob(str(template_path+'*sa*'))])    
+        elif II[3] <= seed < II[4]:
+            #its Sa
+            host = glob.glob(str(template_path+'*sa*'))
+        elif II[4] <= seed < II[5]:
+            #its either Sa or Sb
+            host = random.choice([glob.glob(str(template_path+'*sa*')),
+                                  glob.glob(str(template_path+'*sb*'))])
+        elif II[5] <= seed < II[6]:
+            #its Sb
+            host = glob.glob(str(template_path+'*sb*'))
+        elif II[6] <= seed < II[7]:
+            #its either Sb or Sc
+            host = random.choice([glob.glob(str(template_path+'*sb*')),
+                                  glob.glob(str(template_path+'*sc*'))])
+            
+        elif II[7] <= seed < II[8]:
+            #its Sc
+            host = glob.glob(str(template_path+'*sc*'))
+        elif II[8] <= seed < II[9]:
+            #its either Sc or Sd (we'll call this Sc)
+            host = glob.glob(str(template_path+'*sc*'))
+
+        elif seed > II[9]:
+            #its Sd+ (so either Sc or Sb (the most common hosts))
+            host = random.choice([glob.glob(str(template_path+'*sb*')),
+                                  glob.glob(str(template_path+'*sc*'))])
+        
+        else:
+            print(seed , ' is not recognised for some reason')
+
+    elif trans_species == 'IIn':
+        #uses IIn probability distribution
+        if seed < IIn[0]:
+            # it's an ellipical
+            host = glob.glob(str(template_path+'*el*'))
+        elif IIn[0] <= seed < IIn[1]:
+            #its either elliptical or S0
+            host = random.choice([glob.glob(str(template_path+'*el*')),
+                                  glob.glob(str(template_path+'*s0*'))])
+        elif IIn[1] <= seed < IIn[2]:
+            #its S0
+            host = glob.glob(str(template_path+'*s0*'))
+        elif IIn[2] <= seed < IIn[3]:
+            #its either S0 or Sa
+            host = random.choice([glob.glob(str(template_path+'*s0*')),
+                                  glob.glob(str(template_path+'*sa*'))])    
+        elif IIn[3] <= seed < IIn[4]:
+            #its Sa
+            host = glob.glob(str(template_path+'*sa*'))
+        elif IIn[4] <= seed < IIn[5]:
+            #its either Sa or Sb
+            host = random.choice([glob.glob(str(template_path+'*sa*')),
+                                  glob.glob(str(template_path+'*sb*'))])
+        elif IIn[5] <= seed < IIn[6]:
+            #its Sb
+            host = glob.glob(str(template_path+'*sb*'))
+        elif IIn[6] <= seed < IIn[7]:
+            #its either Sb or Sc
+            host = random.choice([glob.glob(str(template_path+'*sb*')),
+                                  glob.glob(str(template_path+'*sc*'))])
+            
+        elif IIn[7] <= seed < IIn[8]:
+            #its Sc
+            host = glob.glob(str(template_path+'*sc*'))
+        elif IIn[8] <= seed < IIn[9]:
+            #its either Sc or Sd (we'll call this Sc)
+            host = glob.glob(str(template_path+'*sc*'))
+
+        elif seed > IIn[9]:
+            #its Sd+ (so either Sc or Sb (the most common hosts))
+            host = random.choice([glob.glob(str(template_path+'*sc*')),
+                                  glob.glob(str(template_path+'*sb*'))])
+        
+        else:
+            print(seed , ' is not recognised for some reason')
+
+    elif trans_species == 'IIb':
+        #uses IIb probability distribution
+        if seed < IIb[0]:
+            # it's an ellipical
+            host = glob.glob(str(template_path+'*el*'))
+        elif IIb[0] <= seed < IIb[1]:
+            #its either elliptical or S0
+            host = random.choice([glob.glob(str(template_path+'*el*')),
+                                  glob.glob(str(template_path+'*s0*'))])
+        elif IIb[1] <= seed < IIb[2]:
+            #its S0
+            host = glob.glob(str(template_path+'*s0*'))
+        elif IIb[2] <= seed < IIb[3]:
+            #its either S0 or Sa
+            host = random.choice([glob.glob(str(template_path+'*s0*')),
+                                  glob.glob(str(template_path+'*sa*'))])    
+        elif IIb[3] <= seed < IIb[4]:
+            #its Sa
+            host = glob.glob(str(template_path+'*sa*'))
+        elif IIb[4] <= seed < IIb[5]:
+            #its either Sa or Sb
+            host = random.choice([glob.glob(str(template_path+'*sa*')),
+                                  glob.glob(str(template_path+'*sb*'))])
+        elif IIb[5] <= seed < IIb[6]:
+            #its Sb
+            host = glob.glob(str(template_path+'*sb*'))
+        elif IIb[6] <= seed < IIb[7]:
+            #its either Sb or Sc
+            host = random.choice([glob.glob(str(template_path+'*sb*')),
+                                  glob.glob(str(template_path+'*sc*'))])
+            
+        elif IIb[7] <= seed < IIb[8]:
+            #its Sc
+            host = glob.glob(str(template_path+'*sc*'))
+        elif IIb[8] <= seed < IIb[9]:
+            #its either Sc or Sd (we'll call this Sc)
+            host = glob.glob(str(template_path+'*sc*'))
+
+        elif seed > IIb[9]:
+            #its Sd+ (so either Sc or Sb (the most common hosts))
+            host = random.choice([glob.glob(str(template_path+'*sc*')),
+                                  glob.glob(str(template_path+'*sb*'))])
+        
+        else:
+            print(seed , ' is not recognised for some reason')
+
+    elif trans_species == 'SL_':
+        #always an Sc
+        host = glob.glob(str(template_path+'*sc*'))
+
+    elif trans_species in ['TDE', 'CRT', 'KN_']:
+        #just random
+        host = [random.choice(glob.glob(str(template_path+'*')))]
+
+    else:
+        print(trans_species, ' species isnt recognised for some reason')
+
+    return host
 
 if __name__ == "__main__":
     import doctest

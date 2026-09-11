@@ -1,13 +1,12 @@
 ---
 
-#path to save results for the comb maker code
-SNR_results_path: /Users/andrew/Desktop/Python_Stuff/my_spectrum_maker/test_folder/SNR_res/
+spectra_save_path: '/Users/andrew/Desktop/Python_Stuff/test_folder/'
+input_population: '/Users/andrew/Desktop/Python_Stuff/SN_and_Galaxy/Cosmo_paper/files/spec_gen/observed_objects_v34_salt.csv'
 
-#path for saving the contaminated spectra produced by comb_maker()
-spectra_save_path: /Users/andrew/Desktop/Python_Stuff/my_spectrum_maker/test_folder/contamined_spectra/
+begin: 0
+end: 10
 
-#path for saving interim combined simulation tables
-interim_product_path: /Users/andrew/Desktop/Python_Stuff/my_spectrum_maker/test_folder/combined_tables/
+host_loc: '/Users/andrew/Desktop/Python_Stuff/SN_and_Galaxy/galaxy_templates_kinney/'
+SNANA_SED_loc: '/Users/andrew/Desktop/Python_Stuff/SN_and_Galaxy/SNANA_temps/'
 
-#location of simulation data
-sim_data_loc: /Users/andrew/Desktop/Python_Stuff/my_spectrum_maker/test_folder/sim_data/
+sncosmo_model: '/storage/hpc/10/milligaa/template_generation/sncosmo_models/salt2-2-0'
