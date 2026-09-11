@@ -14,17 +14,23 @@ from the directory above the SNeSpecMaker folder, although some simple edits
 can fix the paths to run it from anywhere I suspect.
 
 The inputs in the initialising .yaml file are:
+
 spectra_save_path: Filepath pointing to where you want to save the spectra 
                    produced
+
 host_loc: path to the host galaxy SEDs, obtained from Kinney+1996
 
 begin: the index position in input_population to simulate spectra from
+
 end: the index position in input_population to simulate spectra to
+
 These two params are primarily for distributed computing or manually selecting
 a small number of spectra for debugging
 
 SNANA_SED_loc: location of SNANA-derived transient SEDs
+
 input_population: path to transient data derived from catalog-level 4MOST
                   simulations
+
 Both of these are created from 4MOST proprietary data. Discussion of both can
 be found in Milligan+2025.
