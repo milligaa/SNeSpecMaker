@@ -1,12 +1,19 @@
 import pytest
-from ..Utils.param_setup import assign_sim_files, SELFIE_extractor, adj_setup
+from astropy.table import Table
+from SNeSpecMaker.Utils.param_setup import assign_sim_files, SELFIE_extractor, adj_setup
 
-good_data_path = 'param_setup_test_data/good_test_data/'
-missing_file_path = 'param_setup_test_data/test_data_missing_file/'
-wrong_filetype_path = 'param_setup_test_data/wrong_filetype.txt'
-csv_wrong_header_path = 'param_setup_test_data/csv_wrong_header.csv'
-fits_wrong_header_path = 'param_setup_test_data/fits_wrong_header.fits'
-non_text_data_path = 'param_setup_test_data/test_non_text_data.png'
+good_data_path = 'SNeSpecMaker/tests/param_setup_test_data/good_test_data/'
+missing_file_path = 'SNeSpecMaker/tests/param_setup_test_data/test_data_missing_file/'
+wrong_filetype_path = 'SNeSpecMaker/tests/param_setup_test_data/wrong_filetype.txt'
+csv_wrong_header_path = 'SNeSpecMaker/tests/param_setup_test_data/csv_wrong_header.csv'
+fits_wrong_header_path = 'SNeSpecMaker/tests/param_setup_test_data/fits_wrong_header.fits'
+non_text_data_path = 'SNeSpecMaker/tests/param_setup_test_data/test_non_text_data.png'
+S238_S1001_missing_col = 'SNeSpecMaker/tests/param_setup_test_data/S238_S1001_test_missing_col.csv'
+dump_path = 'SNeSpecMaker/tests/param_setup_test_data/dump/'
+adj_setup_input = 'SNeSpecMaker/tests/param_setup_test_data/good_test_data/good_pop_data.csv'
+
+#this filepath is required to test adj_setup, edit this as needed
+SNANA_temp_path = '/Users/andrew/Desktop/Python_Stuff/SN_and_Galaxy/SNANA_temps/'
 
 # tests of assign_sim_files
 
@@ -50,7 +57,7 @@ def assign_good_sim_files():
 def test_selfie_extract_good_data(assign_good_sim_files):
     table = SELFIE_extractor(
         assign_good_sim_files,
-        '/Users/andrew/Desktop/Python_Stuff/my_spectrum_maker/test_folder/combined_tables'
+        dump_path
         )
     
     assert len(table.columns) == 31
@@ -65,7 +72,7 @@ def test_extract_empty_dictionary_csv(assign_good_sim_files):
     with pytest.raises(FileNotFoundError):
         SELFIE_extractor(
             assign_good_sim_files,
-            'test_folder/SNR_res/'
+            dump_path
             )
 
 
@@ -76,36 +83,43 @@ def test_extract_empty_dictionary_fits(assign_good_sim_files):
     with pytest.raises(FileNotFoundError):
         SELFIE_extractor(
             assign_good_sim_files,
-            'test_folder/SNR_res/'
+            dump_path
             )
 
 def test_extract_csv_wrong_columns(assign_good_sim_files):
 
-    assign_good_sim_files["selfie"] = 'param_setup_test_data/S238_S1001_test_missing_col.csv'
+    assign_good_sim_files["selfie"] = S238_S1001_missing_col
 
     with pytest.raises(KeyError):
         SELFIE_extractor(
             assign_good_sim_files,
-            'test_folder/SNR_res/'
+            dump_path
             )
         
 # tests of adj setup
 
-def test_adj_setup_good_data(
-        assign_good_sim_files
-        ):
-    output = SELFIE_extractor(assign_good_sim_files,
-                              'test_folder/SNR_res/')
-    output_2 = adj_setup(output)
-    assert output_2[0] == [0.25628, 0.545628, 0.215213]
-    assert output_2[-1] == [0.941004, 1.12286, 0.463877]
+@pytest.fixture
+def input_adj_setup():
+    data_to_use = Table.read(adj_setup_input,
+                                 format = 'csv', delimiter = ',')
+
+    return data_to_use
+
+def test_adj_setup_good_data(input_adj_setup):
+
+    output = adj_setup(input_adj_setup, SNANA_temp_path)
+    print(output[0])
+    assert output[9] == [17535717, 22308419, 27080102]
+    assert output[-1] == ['II', 'SALT2.WF', 'II']
 
 def test_adj_setup_missing_keyword(
-        assign_good_sim_files
+        input_adj_setup
         ):
-    output = SELFIE_extractor(assign_good_sim_files,
-                              'test_folder/SNR_res/')
-    del output["redshift_estimate"]
+    input = input_adj_setup
+    del input["redshift_estimate"]
     with pytest.raises(KeyError):
-        adj_setup(output)
-    
+        adj_setup(input, SNANA_temp_path)
+
+#test of assign_host
+
+#test of get_SN_and_host_type

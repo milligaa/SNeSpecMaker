@@ -157,11 +157,9 @@ def adj_setup(data: Table, SNANA_temps:str) -> list:
     redshift = []
     templates = []
     SNe_types = []
-    phase = []
     ddlr = []
     snsep = []
     texp_visit = []
-    isky = []
     name = []
     ra = []
     dec = []
@@ -178,11 +176,9 @@ def adj_setup(data: Table, SNANA_temps:str) -> list:
         redshift.append(real_data['redshift_estimate'][it])
         templates.append(real_data['template'][it])
         SNe_types.append(real_data['sim_type_name'][it])
-        phase.append(-99)
         ddlr.append(real_data['hostgal_ddlr'][it])
         snsep.append(real_data['hostgal_snsep'][it])
         texp_visit.append(real_data['visit_texp'][it])
-        isky.append(real_data['isky'][it])
         name.append(real_data['name'][it])
         ra.append(real_data['ra_y'][it])
         dec.append(real_data['dec_y'][it])
@@ -192,7 +188,6 @@ def adj_setup(data: Table, SNANA_temps:str) -> list:
         model.append(real_data['sim_type_name'][it])
 
     SNe_temp_array = glob.glob(SNANA_temps+'*')
-    print(SNe_temp_array)
 
     SNe_temp_names = []
     for t in range(len(SNe_temp_array)):
@@ -205,10 +200,7 @@ def adj_setup(data: Table, SNANA_temps:str) -> list:
         supernovae.append(SNe_temp_array[SNe_temp_names.index(templates[ti])])
 
 
-
-    print(len(Smags), len(Gmags), len(redshift), len(supernovae))
-
-    return redshift, Smags, Gmags, phase, templates, SNe_types, supernovae, ddlr, snsep, texp_visit, isky, name, ra, dec, x0s, x1s, cs, model
+    return redshift, Smags, Gmags, templates, SNe_types, supernovae, ddlr, snsep, texp_visit, name, ra, dec, x0s, x1s, cs, model
 
 
 def assign_sim_files(sim_data_path):

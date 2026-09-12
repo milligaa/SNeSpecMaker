@@ -8,5 +8,3 @@ end: 10
 
 host_loc: '/Users/andrew/Desktop/Python_Stuff/SN_and_Galaxy/galaxy_templates_kinney/'
 SNANA_SED_loc: '/Users/andrew/Desktop/Python_Stuff/SN_and_Galaxy/SNANA_temps/'
-
-sncosmo_model: '/storage/hpc/10/milligaa/template_generation/sncosmo_models/salt2-2-0'

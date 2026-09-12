@@ -29,19 +29,17 @@ def make_blended(save_spec_loc, population_file, begin, end, host_loc,
     redshift = template_values[0]
     Smags = template_values[1]
     Gmags = template_values[2]
-    phase = template_values[3]
-    supernovae = template_values[6]
-    ddlr = template_values[7]
-    snsep = template_values[8]
-    texp_visit = template_values[9]
-    isky = template_values[10]
-    name = template_values[11]
-    ra = template_values[12]
-    dec = template_values[13]
-    x0 = template_values[14]
-    x1 = template_values[15]
-    c = template_values[16]
-    models = template_values[17]
+    supernovae = template_values[5]
+    ddlr = template_values[6]
+    snsep = template_values[7]
+    texp_visit = template_values[8]
+    name = template_values[9]
+    ra = template_values[10]
+    dec = template_values[11]
+    x0 = template_values[12]
+    x1 = template_values[13]
+    c = template_values[14]
+    models = template_values[15]
 
     #now must perform the correction for effective fibre mag
     seeing_val = 0.8
@@ -93,9 +91,8 @@ def make_blended(save_spec_loc, population_file, begin, end, host_loc,
     SNR_table['True_Gmag'] = Gmags
     SNR_table['Fibre_Smag'] = smag_eff_fibre
     SNR_table['Fibre_Gmag'] = gmag_eff_fibre
-    SNR_table['Phase'] = phase
+    SNR_table['Phase'] = SN_phase
     SNR_table['Texp_Visit'] = texp_visit
-    SNR_table['isky'] = isky
     SNR_table['sne_class'] = gal_type_str
     SNR_table['host_morph'] = SN_type_str
     SNR_table['name'] = name
